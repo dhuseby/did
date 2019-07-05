@@ -1,0 +1,19 @@
+[package]
+name = "did"
+version = "0.1.0"
+authors = ["David Huseby"]
+edition = "2018"
+description = "Library for loading/saving DID documents."
+repository = "https://github.com/dhuseby/did"
+documentation = "https://github.com/dhuseby/did/blob/master/README.md"
+readme = "README.md"
+keywords = ["did"]
+license = "Apache-2.0"
+
+[dependencies]
+indexmap = { git="https://github.com/bluss/indexmap", version = "1.1.0", features = ["serde-1"] }
+log = "0.4.6"
+serde = "1.0.94"
+serde_derive = "1.0.94"
+serde_json = "1.0.40"
+void = "1.0.2"
