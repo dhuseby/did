@@ -1,8 +1,4 @@
-pub use self::doc::*;
+pub use self::doc::Document;
+
+pub mod fields;
 pub mod doc;
-
-pub use self::context::*;
-pub mod context;
-
-pub use self::helpers::*;
-pub mod helpers;

@@ -33,8 +33,7 @@ impl FromStr for Context {
 }
 
 
-impl Serialize for Context
-{
+impl Serialize for Context {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
