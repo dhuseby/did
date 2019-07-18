@@ -1,5 +1,5 @@
 use serde::{Deserialize, Deserializer};
-use serde::de::{self, Visitor, SeqAccess /*, MapAccess*/ };
+use serde::de::{self, Visitor, SeqAccess, MapAccess };
 use std::fmt;
 use std::marker::PhantomData;
 use std::str::FromStr;
@@ -42,9 +42,8 @@ where
     deserializer.deserialize_any(StringOrList(PhantomData))
 }
 
-/*
 // Code lifted verbatim from https://serde.rs/string-or-struct.html
-fn string_or_struct<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+pub fn string_or_struct<'de, T, D>(deserializer: D) -> Result<T, D::Error>
 where
     T: Deserialize<'de> + FromStr<Err = Void>,
     D: Deserializer<'de>,
@@ -87,4 +86,4 @@ where
 
     deserializer.deserialize_any(StringOrStruct(PhantomData))
 }
-*/
+
