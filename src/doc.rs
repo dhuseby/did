@@ -4,7 +4,7 @@ use crate::fields::{
     PublicKey, 
     ServiceEndpoint, 
     Subject, 
-    string_or_list
+    string_or_list,
 };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -14,10 +14,8 @@ pub struct Document {
     pub id: Subject,
     #[serde(rename = "publicKey", skip_serializing_if = "Vec::is_empty", default)]
     pub public_key: Vec<PublicKey>,
-    /*
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
-    pub authentication: Vec<Authentication>,
-    */
+    pub authentication: Vec<PublicKey>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub service: Vec<ServiceEndpoint>
 }

@@ -1,6 +1,6 @@
 extern crate did;
 
-use did::{Document, fields::PublicKeyType};
+use did::{Document, fields::PublicKeyType, fields::PublicKeyDataType};
 use serde_json;
 
 #[test]
@@ -100,7 +100,6 @@ fn did_parse_document_2() {
     assert_eq!(s.as_str(), flat);
 }
 
-/*
 #[test]
 fn did_parse_document_3() {
     let jstr = r#"
@@ -129,19 +128,19 @@ fn did_parse_document_3() {
     assert_eq!(doc.authentication.len(), 3);
     assert_eq!(doc.service.len(), 0);
     assert_eq!(doc.authentication[0].id, "did:example:123456789abcdefghi#keys-1");
-    assert!(doc.authentication[0].is_reference());
+    assert!(doc.authentication[0].reference);
     assert_eq!(doc.authentication[1].id, "did:example:123456789abcdefghi#biometric-1");
-    assert!(doc.authentication[1].is_reference());
+    assert!(doc.authentication[1].reference);
     assert_eq!(doc.authentication[2].id, "did:example:123456789abcdefghi#keys-2");
-    assert_eq!(doc.authentication[2].auth_type, PublicKeyType::Ed25519VerificationKey2018);
+    assert_eq!(doc.authentication[2].key_type, PublicKeyType::Ed25519VerificationKey2018);
     assert_eq!(doc.authentication[2].controller, "did:example:123456789abcdefghi");
+    assert_eq!(doc.authentication[2].key_data_type, PublicKeyDataType::Base58);
     assert_eq!(doc.authentication[2].key_data, "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV");
-    assert_eq!(doc.authentication[2].is_reference(), false);
+    assert_eq!(doc.authentication[2].reference, false);
     
     let s: String = serde_json::to_string(&doc).unwrap();
     assert_eq!(s.as_str(), flat);
 }
-*/
 
 #[test]
 fn did_parse_document_4() {
