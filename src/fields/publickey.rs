@@ -132,7 +132,7 @@ impl<'de> Deserialize<'de> for PublicKey {
                 E: de::Error,
             {
                 Ok(PublicKey {
-                    id: Subject::new(value),
+                    id: Subject::from_str(value).unwrap(),
                     key_type: PublicKeyType::default(),
                     controller: Subject::default(),
                     key_data_type: PublicKeyDataType::Unknown,

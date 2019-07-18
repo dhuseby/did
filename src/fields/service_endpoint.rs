@@ -10,6 +10,7 @@ pub struct ServiceEndpoint {
             deserialize_with = "string_or_list", 
             default)]
     pub context: Context,
+    #[serde(skip_serializing_if = "Subject::is_missing", default)]
     pub id: Subject,
     #[serde(rename = "type")]
     pub service_type: String,
