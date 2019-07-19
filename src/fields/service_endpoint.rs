@@ -6,11 +6,11 @@ use crate::fields::{ Context, Subject, string_or_list };
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ServiceEndpoint {
     #[serde(rename = "@context", 
-            skip_serializing_if = "Context::is_missing", 
+            skip_serializing_if = "Context::is_empty", 
             deserialize_with = "string_or_list", 
             default)]
     pub context: Context,
-    #[serde(skip_serializing_if = "Subject::is_missing", default)]
+    #[serde(skip_serializing_if = "Subject::is_empty", default)]
     pub id: Subject,
     #[serde(rename = "type")]
     pub service_type: String,
