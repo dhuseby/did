@@ -13,7 +13,7 @@ impl Context {
         &self.0
     }
 
-    pub fn is_missing(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
 }
