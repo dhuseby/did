@@ -6,7 +6,7 @@ use std::fmt;
 use std::str::FromStr;
 use crate::fields::Subject;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
 #[serde(rename_all = "PascalCase")]
 pub enum PublicKeyType {
     UnknownKey,
@@ -21,8 +21,8 @@ impl Default for PublicKeyType {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub enum PublicKeyDataType {
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum PublicKeyEncoding {
     Unknown,
     Pem,
     Jwk,
@@ -33,19 +33,25 @@ pub enum PublicKeyDataType {
     EthereumAddress
 }
 
-impl FromStr for PublicKeyDataType {
+impl Default for PublicKeyEncoding {
+    fn default() -> Self {
+        PublicKeyEncoding::Unknown
+    }
+}
+
+impl FromStr for PublicKeyEncoding {
     type Err = ();
 
-    fn from_str(s: &str) -> Result<PublicKeyDataType, Self::Err> {
+    fn from_str(s: &str) -> Result<PublicKeyEncoding, Self::Err> {
         match s {
-            "publicKeyUnknown" => Ok(PublicKeyDataType::Unknown),
-            "publicKeyPem" => Ok(PublicKeyDataType::Pem),
-            "publicKeyJwk" => Ok(PublicKeyDataType::Jwk),
-            "publicKeyHex" => Ok(PublicKeyDataType::Hex),
-            "publicKeyBase64" => Ok(PublicKeyDataType::Base64),
-            "publicKeyBase58" => Ok(PublicKeyDataType::Base58),
-            "publicKeyMultibase" => Ok(PublicKeyDataType::Multibase),
-            "ethereumAddress" => Ok(PublicKeyDataType::EthereumAddress),
+            "publicKeyUnknown" => Ok(PublicKeyEncoding::Unknown),
+            "publicKeyPem" => Ok(PublicKeyEncoding::Pem),
+            "publicKeyJwk" => Ok(PublicKeyEncoding::Jwk),
+            "publicKeyHex" => Ok(PublicKeyEncoding::Hex),
+            "publicKeyBase64" => Ok(PublicKeyEncoding::Base64),
+            "publicKeyBase58" => Ok(PublicKeyEncoding::Base58),
+            "publicKeyMultibase" => Ok(PublicKeyEncoding::Multibase),
+            "ethereumAddress" => Ok(PublicKeyEncoding::EthereumAddress),
             _ => Err(()),
         }
     }
@@ -53,20 +59,48 @@ impl FromStr for PublicKeyDataType {
 
 #[derive(Debug)]
 pub struct PublicKey {
-    pub id: Subject,
-    pub key_type: PublicKeyType,
-    pub controller: Subject,
-    pub key_data_type: PublicKeyDataType,
-    pub key_data: String,
-    pub reference: bool
+    id: Subject,
+    key_type: PublicKeyType,
+    controller: Subject,
+    key_data_type: PublicKeyEncoding,
+    key_data: String,
+    reference: bool
 }
+
+impl PublicKey {
+
+    pub fn subject(&self) -> &Subject {
+        &self.id
+    }
+
+    pub fn controller(&self) -> &Subject {
+        &self.controller
+    }
+
+    pub fn kind(&self) -> PublicKeyType {
+        self.key_type
+    }
+
+    pub fn data(&self) -> &String {
+        &self.key_data
+    }
+
+    pub fn encoding(&self) -> PublicKeyEncoding {
+        self.key_data_type
+    }
+
+    pub fn reference(&self) -> bool {
+        self.reference
+    }
+}
+
 
 impl<'de> Deserialize<'de> for PublicKey {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        enum Field { Subject, Type, Controller, KeyData(PublicKeyDataType) };
+        enum Field { Subject, Type, Controller, KeyData(PublicKeyEncoding) };
 
         impl<'de> Deserialize<'de> for Field {
             fn deserialize<D>(deserializer: D) -> Result<Field, D::Error>
@@ -104,7 +138,7 @@ impl<'de> Deserialize<'de> for PublicKey {
                             "type" => Ok(Field::Type),
                             "controller" => Ok(Field::Controller),
                             _ => {
-                                if let Ok(pkdt) = PublicKeyDataType::from_str(value) {
+                                if let Ok(pkdt) = PublicKeyEncoding::from_str(value) {
                                     Ok(Field::KeyData(pkdt))
                                 } else {
                                     Err(de::Error::unknown_field(value, FIELDS))
@@ -135,7 +169,7 @@ impl<'de> Deserialize<'de> for PublicKey {
                     id: Subject::from_str(value).unwrap(),
                     key_type: PublicKeyType::default(),
                     controller: Subject::default(),
-                    key_data_type: PublicKeyDataType::Unknown,
+                    key_data_type: PublicKeyEncoding::Unknown,
                     key_data: "".to_owned(),
                     reference: true
                 })
@@ -215,14 +249,14 @@ impl Serialize for PublicKey {
             pk.serialize_field("type", &self.key_type)?;
             pk.serialize_field("controller", &self.controller)?;
             match self.key_data_type {
-                PublicKeyDataType::Unknown => pk.serialize_field("publicKeyUnknown", &self.key_data)?,
-                PublicKeyDataType::Pem => pk.serialize_field("publicKeyPem", &self.key_data)?,
-                PublicKeyDataType::Jwk => pk.serialize_field("publicKeyJwk", &self.key_data)?,
-                PublicKeyDataType::Hex => pk.serialize_field("publicKeyHex", &self.key_data)?,
-                PublicKeyDataType::Base64 => pk.serialize_field("publicKeyBase64", &self.key_data)?,
-                PublicKeyDataType::Base58 => pk.serialize_field("publicKeyBase58", &self.key_data)?,
-                PublicKeyDataType::Multibase => pk.serialize_field("publicKeyMultibase", &self.key_data)?,
-                PublicKeyDataType::EthereumAddress => pk.serialize_field("ethereumAddress", &self.key_data)?
+                PublicKeyEncoding::Unknown => pk.serialize_field("publicKeyUnknown", &self.key_data)?,
+                PublicKeyEncoding::Pem => pk.serialize_field("publicKeyPem", &self.key_data)?,
+                PublicKeyEncoding::Jwk => pk.serialize_field("publicKeyJwk", &self.key_data)?,
+                PublicKeyEncoding::Hex => pk.serialize_field("publicKeyHex", &self.key_data)?,
+                PublicKeyEncoding::Base64 => pk.serialize_field("publicKeyBase64", &self.key_data)?,
+                PublicKeyEncoding::Base58 => pk.serialize_field("publicKeyBase58", &self.key_data)?,
+                PublicKeyEncoding::Multibase => pk.serialize_field("publicKeyMultibase", &self.key_data)?,
+                PublicKeyEncoding::EthereumAddress => pk.serialize_field("ethereumAddress", &self.key_data)?
             }
             pk.end()
         }

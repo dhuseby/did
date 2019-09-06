@@ -1,7 +1,6 @@
 use indexmap::IndexMap;
 use serde_derive::{Serialize, Deserialize};
 use serde_json::{self, Value};
-use std::collections::HashMap;
 use std::str::FromStr;
 use std::string::{String, ToString};
 use void::Void;
@@ -14,7 +13,7 @@ use crate::fields::{
 };
 
 #[derive(Serialize, Deserialize, Debug)]
-struct ParsedDocument {
+pub struct Document {
     #[serde(rename = "@context", deserialize_with = "string_or_list")]
     context: Context,
     id: Subject,
@@ -34,36 +33,44 @@ struct ParsedDocument {
     pub extra: IndexMap<String, Value>
 }
 
-pub struct Document {
-    doc: ParsedDocument,
-    public_keys: HashMap<Subject, PublicKey>,
-    authentications: HashMap<Subject, PublicKey>,
-    service_endpoints: HashMap<Subject, ServiceEndpoint>
-}
-
 impl Document {
     pub fn new(context: &str, id: &str) -> Self {
-        Document {
-            doc: ParsedDocument { 
-                context: Context::from_str(context).unwrap(),
-                id: Subject::from_str(id).unwrap(),
-                created: String::new(),
-                updated: String::new(),
-                public_key: Vec::default(),
-                authentication: Vec::default(),
-                service: Vec::default(),
-                extra: IndexMap::default()
-            },
-            public_keys: HashMap::new(),
-            authentications: HashMap::new(),
-            service_endpoints: HashMap::new()
+        Document { 
+            context: Context::from_str(context).unwrap(),
+            id: Subject::from_str(id).unwrap(),
+            created: String::new(),
+            updated: String::new(),
+            public_key: Vec::default(),
+            authentication: Vec::default(),
+            service: Vec::default(),
+            extra: IndexMap::default()
         }
+    }
+
+    pub fn context(&self) -> &Vec<String> {
+        &self.context.as_vec()
+    }
+
+    pub fn subject(&self) -> &Subject {
+        &self.id
+    }
+
+    pub fn public_key(&self) -> &Vec<PublicKey> {
+        &self.public_key
+    }
+
+    pub fn authentication(&self) -> &Vec<PublicKey> {
+        &self.authentication
+    }
+
+    pub fn service(&self) -> &Vec<ServiceEndpoint> {
+        &self.service
     }
 }
 
 impl ToString for Document {
     fn to_string(&self) -> String {
-        serde_json::to_string(&self.doc).unwrap()
+        serde_json::to_string(&self).unwrap()
     }
 }
 
@@ -71,17 +78,7 @@ impl FromStr for Document {
     type Err = Void;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let doc = Document { 
-            doc: serde_json::from_str(s).unwrap(),
-            public_keys: HashMap::new(),
-            authentications: HashMap::new(),
-            service_endpoints: HashMap::new()
-        };
-
-        //TODO: initialize the public_keys, authentications, and
-        //      service_endpoints HashMaps from the underlying Vecs in the
-        //      parsed doc.
-
+        let doc = serde_json::from_str(s).unwrap();
         Ok(doc)
     }
 }

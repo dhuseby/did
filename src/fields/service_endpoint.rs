@@ -9,13 +9,32 @@ pub struct ServiceEndpoint {
             skip_serializing_if = "Context::is_empty", 
             deserialize_with = "string_or_list", 
             default)]
-    pub context: Context,
+    context: Context,
     #[serde(skip_serializing_if = "Subject::is_empty", default)]
-    pub id: Subject,
+    id: Subject,
     #[serde(rename = "type")]
-    pub service_type: String,
+    service_type: String,
     #[serde(rename = "serviceEndpoint")]
-    pub endpoint: String,
+    endpoint: String,
     #[serde(flatten)]
     pub extra: IndexMap<String, Value>
+}
+
+impl ServiceEndpoint {
+
+    pub fn context(&self) -> &Context {
+        &self.context
+    }
+
+    pub fn subject(&self) -> &Subject {
+        &self.id
+    }
+
+    pub fn kind(&self) -> &String {
+        &self.service_type
+    }
+
+    pub fn endpoint(&self) -> &String {
+        &self.endpoint
+    }
 }
