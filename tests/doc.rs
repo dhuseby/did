@@ -1,7 +1,10 @@
-extern crate did;
+extern crate did_doc as did;
 
-use did::Document;
-use did::fields::{ PublicKeyType, PublicKeyEncoding };
+use did::{
+    Document,
+    fields::{PublicKeyType, PublicKeyEncoding}
+};
+
 use std::str::FromStr;
 use std::string::ToString;
 

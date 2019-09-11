@@ -1,11 +1,11 @@
 use failure::{Backtrace, Context, Fail};
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
+#[derive(Clone, Eq, PartialEq, Debug, Fail)]
 pub enum DidErrorKind {
     #[fail(display = "Invalid did uri specified. Must start with 'did:'")]
     InvalidDidUri,
-    #[fail(display = "Unknown did method")]
-    UnknownDidMethod
+    #[fail(display = "Unknown did method: {:?}", msg)]
+    UnknownDidMethod { msg: String }
 }
 
 #[derive(Debug)]
@@ -40,7 +40,8 @@ impl DidError {
     }
 
     pub fn kind(&self) -> DidErrorKind {
-        *self.inner.get_context()
+        let c = self.inner.get_context().clone();
+        c
     }
 }
 
