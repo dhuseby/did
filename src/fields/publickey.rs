@@ -1,10 +1,10 @@
-use serde::de::{self, Deserialize, Deserializer, Visitor, MapAccess};
-use serde::ser::{Serialize, Serializer, SerializeStruct};
+use crate::fields::Subject;
+use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 use serde_derive::{Deserialize, Serialize};
 use std::default::Default;
 use std::fmt;
 use std::str::FromStr;
-use crate::fields::Subject;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
 #[serde(rename_all = "PascalCase")]
@@ -12,7 +12,7 @@ pub enum PublicKeyType {
     UnknownKey,
     Ed25519VerificationKey2018,
     RsaVerificationKey2018,
-    EcdsaSecp256k1VerificationKey2019
+    EcdsaSecp256k1VerificationKey2019,
 }
 
 impl Default for PublicKeyType {
@@ -30,7 +30,7 @@ pub enum PublicKeyEncoding {
     Base64,
     Base58,
     Multibase,
-    EthereumAddress
+    EthereumAddress,
 }
 
 impl Default for PublicKeyEncoding {
@@ -64,11 +64,10 @@ pub struct PublicKey {
     controller: Subject,
     key_data_type: PublicKeyEncoding,
     key_data: String,
-    reference: bool
+    reference: bool,
 }
 
 impl PublicKey {
-
     pub fn subject(&self) -> &Subject {
         &self.id
     }
@@ -94,20 +93,24 @@ impl PublicKey {
     }
 }
 
-
 impl<'de> Deserialize<'de> for PublicKey {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        enum Field { Subject, Type, Controller, KeyData(PublicKeyEncoding) };
+        enum Field {
+            Subject,
+            Type,
+            Controller,
+            KeyData(PublicKeyEncoding),
+        };
 
         impl<'de> Deserialize<'de> for Field {
             fn deserialize<D>(deserializer: D) -> Result<Field, D::Error>
             where
                 D: Deserializer<'de>,
             {
-                const FIELDS: &'static [&'static str] = &[
+                const FIELDS: &[&str] = &[
                     "id",
                     "type",
                     "controller",
@@ -118,7 +121,8 @@ impl<'de> Deserialize<'de> for PublicKey {
                     "publicKeyBase64",
                     "publicKeyBase58",
                     "publicKeyMultibase",
-                    "ethereumAddress" ];
+                    "ethereumAddress",
+                ];
 
                 struct FieldVisitor;
 
@@ -171,7 +175,7 @@ impl<'de> Deserialize<'de> for PublicKey {
                     controller: Subject::default(),
                     key_data_type: PublicKeyEncoding::Unknown,
                     key_data: "".to_owned(),
-                    reference: true
+                    reference: true,
                 })
             }
 
@@ -217,17 +221,19 @@ impl<'de> Deserialize<'de> for PublicKey {
 
                 let subject = subject.ok_or_else(|| de::Error::missing_field("id"))?;
                 let key_type = key_type.ok_or_else(|| de::Error::missing_field("type"))?;
-                let controller = controller.ok_or_else(|| de::Error::missing_field("controller"))?;
-                let key_data_type = key_data_type.ok_or_else(|| de::Error::missing_field("key data"))?;
+                let controller =
+                    controller.ok_or_else(|| de::Error::missing_field("controller"))?;
+                let key_data_type =
+                    key_data_type.ok_or_else(|| de::Error::missing_field("key data"))?;
                 let key_data = key_data.ok_or_else(|| de::Error::missing_field("key data"))?;
 
                 Ok(PublicKey {
                     id: subject,
-                    key_type: key_type,
-                    controller: controller,
-                    key_data_type: key_data_type,
-                    key_data: key_data,
-                    reference: false
+                    key_type,
+                    controller,
+                    key_data_type,
+                    key_data,
+                    reference: false,
                 })
             }
         }
@@ -235,7 +241,7 @@ impl<'de> Deserialize<'de> for PublicKey {
         deserializer.deserialize_any(PublicKeyVisitor)
     }
 }
- 
+
 impl Serialize for PublicKey {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -249,14 +255,24 @@ impl Serialize for PublicKey {
             pk.serialize_field("type", &self.key_type)?;
             pk.serialize_field("controller", &self.controller)?;
             match self.key_data_type {
-                PublicKeyEncoding::Unknown => pk.serialize_field("publicKeyUnknown", &self.key_data)?,
+                PublicKeyEncoding::Unknown => {
+                    pk.serialize_field("publicKeyUnknown", &self.key_data)?
+                }
                 PublicKeyEncoding::Pem => pk.serialize_field("publicKeyPem", &self.key_data)?,
                 PublicKeyEncoding::Jwk => pk.serialize_field("publicKeyJwk", &self.key_data)?,
                 PublicKeyEncoding::Hex => pk.serialize_field("publicKeyHex", &self.key_data)?,
-                PublicKeyEncoding::Base64 => pk.serialize_field("publicKeyBase64", &self.key_data)?,
-                PublicKeyEncoding::Base58 => pk.serialize_field("publicKeyBase58", &self.key_data)?,
-                PublicKeyEncoding::Multibase => pk.serialize_field("publicKeyMultibase", &self.key_data)?,
-                PublicKeyEncoding::EthereumAddress => pk.serialize_field("ethereumAddress", &self.key_data)?
+                PublicKeyEncoding::Base64 => {
+                    pk.serialize_field("publicKeyBase64", &self.key_data)?
+                }
+                PublicKeyEncoding::Base58 => {
+                    pk.serialize_field("publicKeyBase58", &self.key_data)?
+                }
+                PublicKeyEncoding::Multibase => {
+                    pk.serialize_field("publicKeyMultibase", &self.key_data)?
+                }
+                PublicKeyEncoding::EthereumAddress => {
+                    pk.serialize_field("ethereumAddress", &self.key_data)?
+                }
             }
             pk.end()
         }

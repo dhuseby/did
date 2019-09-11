@@ -1,5 +1,5 @@
+use serde::de::{self, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer};
-use serde::de::{self, Visitor, SeqAccess, MapAccess };
 use std::fmt;
 use std::marker::PhantomData;
 use std::str::FromStr;
@@ -86,4 +86,3 @@ where
 
     deserializer.deserialize_any(StringOrStruct(PhantomData))
 }
-

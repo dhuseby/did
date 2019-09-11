@@ -1,16 +1,10 @@
+use crate::fields::{string_or_list, Context, PublicKey, ServiceEndpoint, Subject};
 use indexmap::IndexMap;
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 use serde_json::{self, Value};
 use std::str::FromStr;
 use std::string::{String, ToString};
 use void::Void;
-use crate::fields::{
-    Context, 
-    PublicKey, 
-    ServiceEndpoint, 
-    Subject, 
-    string_or_list,
-};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Document {
@@ -30,12 +24,12 @@ pub struct Document {
     //#[serde(skip_serializing_if = "Proof::is_empty", default)]
     //pub proof: Proof,
     #[serde(flatten)]
-    pub extra: IndexMap<String, Value>
+    pub extra: IndexMap<String, Value>,
 }
 
 impl Document {
     pub fn new(context: &str, id: &str) -> Self {
-        Document { 
+        Document {
             context: Context::from_str(context).unwrap(),
             id: Subject::from_str(id).unwrap(),
             created: String::new(),
@@ -43,7 +37,7 @@ impl Document {
             public_key: Vec::default(),
             authentication: Vec::default(),
             service: Vec::default(),
-            extra: IndexMap::default()
+            extra: IndexMap::default(),
         }
     }
 
@@ -82,4 +76,3 @@ impl FromStr for Document {
         Ok(doc)
     }
 }
-

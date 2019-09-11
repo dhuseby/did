@@ -5,7 +5,7 @@ pub enum DidErrorKind {
     #[fail(display = "Invalid did uri specified. Must start with 'did:'")]
     InvalidDidUri,
     #[fail(display = "Unknown did method: {:?}", msg)]
-    UnknownDidMethod { msg: String }
+    UnknownDidMethod { msg: String },
 }
 
 #[derive(Debug)]
@@ -35,17 +35,16 @@ impl DidError {
 
     pub fn from_kind(kind: DidErrorKind) -> DidError {
         DidError {
-            inner: Context::new("").context(kind)
+            inner: Context::new("").context(kind),
         }
     }
 
     pub fn kind(&self) -> DidErrorKind {
-        let c = self.inner.get_context().clone();
-        c
+        self.inner.get_context().clone()
     }
 }
 
-impl std::fmt::Display for  DidError {
+impl std::fmt::Display for DidError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let mut first = true;
 

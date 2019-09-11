@@ -1,10 +1,10 @@
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 use std::cmp::Eq;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use void::Void;
 
-#[derive(Serialize, Deserialize, Default, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(transparent)]
 pub struct Subject(String);
 
@@ -36,10 +36,16 @@ impl PartialEq<str> for Subject {
     }
 }
 
+impl PartialEq for Subject {
+    fn eq(&self, rhs: &Subject) -> bool {
+        self.0 == rhs.0
+    }
+}
+
 impl Hash for Subject {
     fn hash<H>(&self, state: &mut H)
     where
-        H: Hasher
+        H: Hasher,
     {
         self.0.hash(state);
     }
@@ -52,4 +58,3 @@ impl FromStr for Subject {
         Ok(Subject(s.to_owned()))
     }
 }
-

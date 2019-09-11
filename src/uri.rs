@@ -1,16 +1,14 @@
 use crate::error::{DidError, DidErrorKind};
 
-use std::{
-    collections::BTreeMap,
-    str::FromStr
-};
+use std::{collections::BTreeMap, str::FromStr};
 
-use nom::{IResult,
-          sequence::preceded,
-          character::complete::char,
-          multi::separated_list,
-          combinator::{map_res, opt, map},
-          bytes::complete::{is_a, is_not, tag, take_while}
+use nom::{
+    bytes::complete::{is_a, is_not, tag, take_while},
+    character::complete::char,
+    combinator::{map, map_res, opt},
+    multi::separated_list,
+    sequence::preceded,
+    IResult,
 };
 
 #[derive(Debug)]
@@ -19,7 +17,7 @@ pub struct DidUri {
     pub method: String,
     pub params: Option<BTreeMap<String, String>>,
     pub query: Option<BTreeMap<String, String>>,
-    pub fragment: Option<String>
+    pub fragment: Option<String>,
 }
 
 impl FromStr for DidUri {
@@ -28,7 +26,7 @@ impl FromStr for DidUri {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match parse_did_string(s.as_bytes()) {
             Ok((_, d)) => Ok(d),
-            Err(_) => Err(DidError::from_kind(DidErrorKind::InvalidDidUri))
+            Err(_) => Err(DidError::from_kind(DidErrorKind::InvalidDidUri)),
         }
     }
 }
@@ -36,11 +34,11 @@ impl FromStr for DidUri {
 impl Clone for DidUri {
     fn clone(&self) -> Self {
         DidUri {
-            id:       self.id.clone(),
-            method:   self.method.clone(),
-            params:   self.params.clone(),
-            query:    self.query.clone(),
-            fragment: self.fragment.clone()
+            id: self.id.clone(),
+            method: self.method.clone(),
+            params: self.params.clone(),
+            query: self.query.clone(),
+            fragment: self.fragment.clone(),
         }
     }
 }
@@ -50,19 +48,33 @@ impl std::fmt::Display for DidUri {
         let mut params = String::new();
         if let Some(p) = &self.params {
             params.push(';');
-            params.push_str(&p.iter().map(|(k, v)| format!("{}={}", k, v)).collect::<Vec<String>>().join(";"));
+            params.push_str(
+                &p.iter()
+                    .map(|(k, v)| format!("{}={}", k, v))
+                    .collect::<Vec<String>>()
+                    .join(";"),
+            );
         }
         let mut query = String::new();
         if let Some(q) = &self.query {
             query.push('?');
-            query.push_str(&q.iter().map(|(k, v)| format!("{}={}", k, v)).collect::<Vec<String>>().join("&"));
+            query.push_str(
+                &q.iter()
+                    .map(|(k, v)| format!("{}={}", k, v))
+                    .collect::<Vec<String>>()
+                    .join("&"),
+            );
         }
-        let mut fragment= String::new();
+        let mut fragment = String::new();
         if let Some(f) = &self.fragment {
             fragment = format!("#{}", f);
         }
 
-        write!(f, "did:{}:{}{}{}{}", self.method, self.id, params, query, fragment)
+        write!(
+            f,
+            "did:{}:{}{}{}{}",
+            self.method, self.id, params, query, fragment
+        )
     }
 }
 
@@ -75,12 +87,24 @@ fn parse_did_string(i: &[u8]) -> IResult<&[u8], DidUri> {
     let (i, query) = opt(did_query)(i)?;
     let (i, fragment) = opt(did_fragment)(i)?;
 
-    Ok((i, DidUri { id: id.unwrap().to_string(),
-                       method: method.unwrap().to_string(),
-                       params: params.map(|m| m.into_iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()),
-                       query: query.map(|m| m.into_iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()),
-                       fragment: fragment.map(|s| s.to_string())
-    }))
+    Ok((
+        i,
+        DidUri {
+            id: id.unwrap().to_string(),
+            method: method.unwrap().to_string(),
+            params: params.map(|m| {
+                m.into_iter()
+                    .map(|(k, v)| (k.to_string(), v.to_string()))
+                    .collect()
+            }),
+            query: query.map(|m| {
+                m.into_iter()
+                    .map(|(k, v)| (k.to_string(), v.to_string()))
+                    .collect()
+            }),
+            fragment: fragment.map(|s| s.to_string()),
+        },
+    ))
 }
 fn is_did_method_char(c: u8) -> bool {
     let c = c as char;
@@ -88,10 +112,7 @@ fn is_did_method_char(c: u8) -> bool {
 }
 fn is_did_id_char(c: u8) -> bool {
     let c = c as char;
-    c.is_ascii_alphanumeric() ||
-        c == '.' ||
-        c == '_' ||
-        c == '-'
+    c.is_ascii_alphanumeric() || c == '.' || c == '_' || c == '-'
 }
 
 fn did_params(i: &[u8]) -> IResult<&[u8], BTreeMap<&str, &str>> {
@@ -106,7 +127,10 @@ fn param_item(i: &[u8]) -> IResult<&[u8], (&str, &str)> {
     Ok((i, (key, val)))
 }
 fn param_token(i: &[u8]) -> IResult<&[u8], &str> {
-    map_res(is_a("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%.-_:"), std::str::from_utf8)(i)
+    map_res(
+        is_a("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%.-_:"),
+        std::str::from_utf8,
+    )(i)
 }
 
 fn did_query(i: &[u8]) -> IResult<&[u8], BTreeMap<&str, &str>> {
@@ -161,7 +185,9 @@ mod resolve_method_tests {
 
         assert!(DidUri::from_str("did:sov:builder:aksjdhgaksjdhgaskdgjh").is_ok());
         assert!(DidUri::from_str("did:sov:test:aksjdhgaksjdhgaskdgjh").is_ok());
-        let did = DidUri::from_str("did:git:12345678jhasdg;file=Users_janedoe_.git?key=ham&value=meat#1-2-3");
+        let did = DidUri::from_str(
+            "did:git:12345678jhasdg;file=Users_janedoe_.git?key=ham&value=meat#1-2-3",
+        );
 
         assert!(did.is_ok());
         let did = did.unwrap();
@@ -175,7 +201,10 @@ mod resolve_method_tests {
         assert_eq!(query.get("key"), Some(&"ham".to_string()));
         assert_eq!(query.get("value"), Some(&"meat".to_string()));
         assert_eq!(&did.fragment.clone().unwrap(), &"1-2-3".to_string());
-        assert_eq!(did.to_string(), "did:git:12345678jhasdg;file=Users_janedoe_.git?key=ham&value=meat#1-2-3".to_string());
+        assert_eq!(
+            did.to_string(),
+            "did:git:12345678jhasdg;file=Users_janedoe_.git?key=ham&value=meat#1-2-3".to_string()
+        );
     }
 
     #[test]
@@ -214,7 +243,7 @@ mod resolve_method_tests {
             let res = DidUri::from_str(s);
             match res {
                 Ok(_) => assert!(false),
-                Err(e) => assert_eq!(e.kind(), DidErrorKind::InvalidDidUri)
+                Err(e) => assert_eq!(e.kind(), DidErrorKind::InvalidDidUri),
             };
         }
     }

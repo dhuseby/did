@@ -1,4 +1,4 @@
-use serde::ser::{Serialize, Serializer, SerializeSeq};
+use serde::ser::{Serialize, SerializeSeq, Serializer};
 use serde_derive::Deserialize;
 use std::default::Default;
 use std::str::FromStr;
@@ -31,7 +31,6 @@ impl FromStr for Context {
         Ok(Context(vec![s.to_owned()]))
     }
 }
-
 
 impl Serialize for Context {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

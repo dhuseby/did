@@ -1,14 +1,16 @@
+use crate::fields::{string_or_list, Context, Subject};
 use indexmap::IndexMap;
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 use serde_json::Value;
-use crate::fields::{ Context, Subject, string_or_list };
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ServiceEndpoint {
-    #[serde(rename = "@context", 
-            skip_serializing_if = "Context::is_empty", 
-            deserialize_with = "string_or_list", 
-            default)]
+    #[serde(
+        rename = "@context",
+        skip_serializing_if = "Context::is_empty",
+        deserialize_with = "string_or_list",
+        default
+    )]
     context: Context,
     #[serde(skip_serializing_if = "Subject::is_empty", default)]
     id: Subject,
@@ -17,11 +19,10 @@ pub struct ServiceEndpoint {
     #[serde(rename = "serviceEndpoint")]
     endpoint: String,
     #[serde(flatten)]
-    pub extra: IndexMap<String, Value>
+    pub extra: IndexMap<String, Value>,
 }
 
 impl ServiceEndpoint {
-
     pub fn context(&self) -> &Context {
         &self.context
     }

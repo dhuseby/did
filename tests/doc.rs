@@ -1,8 +1,8 @@
 extern crate did_doc as did;
 
 use did::{
+    fields::{PublicKeyEncoding, PublicKeyType},
     Document,
-    fields::{PublicKeyType, PublicKeyEncoding}
 };
 
 use std::str::FromStr;
@@ -93,22 +93,28 @@ fn did_parse_document_2() {
     assert_eq!(doc.public_key().len(), 3);
     assert_eq!(doc.authentication().len(), 0);
     assert_eq!(doc.service().len(), 0);
-   
+
     let k1 = &doc.public_key()[0];
     assert_eq!(k1.subject(), "did:example:123456789abcdefghi#keys-1");
     assert_eq!(k1.kind(), PublicKeyType::RsaVerificationKey2018);
     assert_eq!(k1.controller(), "did:example:123456789abcdefghi");
     assert_eq!(k1.reference(), false);
     assert_eq!(k1.encoding(), PublicKeyEncoding::Pem);
-    assert_eq!(k1.data().as_str(), "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----");
-   
+    assert_eq!(
+        k1.data().as_str(),
+        "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
+    );
+
     let k2 = &doc.public_key()[1];
     assert_eq!(k2.subject(), "did:example:123456789abcdefghi#keys-2");
     assert_eq!(k2.kind(), PublicKeyType::Ed25519VerificationKey2018);
     assert_eq!(k2.controller(), "did:example:pqrstuvwxyz0987654321");
     assert_eq!(k2.reference(), false);
     assert_eq!(k2.encoding(), PublicKeyEncoding::Base58);
-    assert_eq!(k2.data().as_str(), "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV");
+    assert_eq!(
+        k2.data().as_str(),
+        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+    );
 
     let k3 = &doc.public_key()[2];
     assert_eq!(k3.subject(), "did:example:123456789abcdefghi#keys-3");
@@ -116,7 +122,10 @@ fn did_parse_document_2() {
     assert_eq!(k3.controller(), "did:example:123456789abcdefghi");
     assert_eq!(k3.reference(), false);
     assert_eq!(k3.encoding(), PublicKeyEncoding::Hex);
-    assert_eq!(k3.data().as_str(), "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71");
+    assert_eq!(
+        k3.data().as_str(),
+        "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
+    );
 
     let s = doc.to_string();
     assert_eq!(s.as_str(), flat);
@@ -173,7 +182,7 @@ fn did_parse_document_3() {
     assert_eq!(k3.encoding(), PublicKeyEncoding::Base58);
     assert_eq!(k3.data(), "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV");
     assert_eq!(k3.reference(), false);
-    
+
     let s = doc.to_string();
     assert_eq!(s.as_str(), flat);
 }
