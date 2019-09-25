@@ -5,7 +5,8 @@ authors = ["David Huseby", "Mike Lodder"]
 edition = "2018"
 description = "Library for loading/saving DID documents."
 repository = "https://github.com/dhuseby/did"
-documentation = "https://github.com/dhuseby/did/blob/master/README.md"
+documentation = "https://docs.rs/ursa"
+homepage = "https://crates.io/crates/did_doc"
 readme = "README.md"
 keywords = ["did"]
 license = "Apache-2.0"
@@ -18,9 +19,9 @@ crate-type = ["staticlib", "rlib", "cdylib"]
 [dependencies]
 indexmap = { version = "1.2.0", features = ["serde-1"] }
 log = "0.4.6"
-serde = "1.0.94"
+serde = "1.0"
 serde_derive = "1.0"
-serde_json = "1.0.40"
+serde_json = "1.0"
 strum = "0.15.0"
 strum_macros = "0.15.0"
 void = "1.0.2"

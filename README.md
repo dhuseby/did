@@ -4,3 +4,54 @@
 
 This is a Rust crate for working with DID documents as defined in the
 [Decentralized Identifier Spec](https://w3c-ccg.github.io/did-spec/).
+
+This crate currently supports two functions: parsing and verifying DID URIs and DID Documents.
+It does not handle DID method specs which are more specific to a network or context.
+
+For handling DID URIs use the `DidUri` class found in `did::uri::DidUri::from_str`.
+
+Example
+```rust
+use did::uri::DidUri;
+
+
+fn main() {
+    //Valid DID URI
+    let did = DidUri::from_str("did:git:akjsdhgaksdjhgasdkgh").unwrap();
+    
+    //Invalid DID URI
+    let res = DidUri::from_str("did:git:");
+    assert!(res.is_err());
+
+    //Convert back to string
+    let did_str = did.to_string();
+}
+```
+
+For handling DID Document parsing use `did::Document`.
+
+Example
+```rust
+use did::{
+    fields::{PublicKeyEncoding, PublicKeyType},
+    Document
+};
+
+fn main() {
+    let jstr = r#"
+    {
+        "@context": "https://w3id.org/did/v1",
+        "id": "did:example:123456789abcdefghi"
+    }
+    "#;
+
+    //Valid did document;
+    let doc = Document::from_str(&jstr).unwrap();    
+
+    assert_eq!(doc.context().len(), 1);
+    assert_eq!(doc.subject(), "did:example:123456789abcdefghi");
+    assert_eq!(doc.public_key().len(), 0);
+    assert_eq!(doc.authentication().len(), 0);
+    assert_eq!(doc.service().len(), 0);
+}
+```
