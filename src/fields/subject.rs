@@ -3,6 +3,8 @@ use std::cmp::Eq;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use void::Void;
+use crate::uri::DidUri;
+use crate::error::DidError;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(transparent)]
@@ -15,6 +17,10 @@ impl Subject {
 
     pub fn as_str(&self) -> &str {
         &self.0
+    }
+
+    pub fn as_did(&self) -> Result<DidUri, DidError> {
+        DidUri::from_str(&self.0)
     }
 
     pub fn is_empty(&self) -> bool {
