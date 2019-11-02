@@ -1,6 +1,6 @@
 [package]
 name = "did_doc"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["David Huseby", "Mike Lodder"]
 edition = "2018"
 description = "Library for loading/saving DID documents."
