@@ -248,7 +248,7 @@ impl Serialize for PublicKey {
         S: Serializer,
     {
         if self.reference {
-            serializer.serialize_str(self.id.as_str())
+            self.id.serialize(serializer)
         } else {
             let mut pk = serializer.serialize_struct("", 4)?;
             pk.serialize_field("id", &self.id)?;

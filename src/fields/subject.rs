@@ -4,23 +4,15 @@ use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use void::Void;
 use crate::uri::DidUri;
-use crate::error::DidError;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(transparent)]
-pub struct Subject(String);
+pub struct Subject(DidUri);
 
 impl Subject {
     pub fn new(s: &str) -> Self {
-        Subject(s.to_owned())
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-
-    pub fn as_did(&self) -> Result<DidUri, DidError> {
-        DidUri::from_str(&self.0)
+        let did = DidUri::from_str(s).unwrap();
+        Subject(did)
     }
 
     pub fn is_empty(&self) -> bool {
@@ -44,7 +36,7 @@ impl PartialEq<str> for Subject {
 
 impl PartialEq for Subject {
     fn eq(&self, rhs: &Subject) -> bool {
-        self.0 == rhs.0
+        self == rhs
     }
 }
 
@@ -53,7 +45,8 @@ impl Hash for Subject {
     where
         H: Hasher,
     {
-        self.0.hash(state);
+        let s = self.0.to_string();
+        s.hash(state);
     }
 }
 
@@ -61,6 +54,6 @@ impl FromStr for Subject {
     type Err = Void;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Subject(s.to_owned()))
+        Ok(Subject(DidUri::from_str(s).unwrap()))
     }
 }

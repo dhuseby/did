@@ -1,6 +1,11 @@
 use crate::error::{DidError, DidErrorKind};
 
-use std::{collections::BTreeMap, str::FromStr};
+use std::{
+    collections::BTreeMap,
+    default::Default,
+    fmt,
+    str::FromStr
+};
 
 use nom::{
     bytes::complete::{is_a, is_not, tag, take_while},
@@ -11,13 +16,58 @@ use nom::{
     IResult,
 };
 
+use serde::de::{self, Deserialize, Deserializer, Visitor};
+use serde::ser::{Serialize, Serializer};
+
 #[derive(Debug)]
 pub struct DidUri {
+    empty: bool,
     pub id: String,
     pub method: String,
     pub params: Option<BTreeMap<String, String>>,
     pub query: Option<BTreeMap<String, String>>,
     pub fragment: Option<String>,
+}
+
+impl DidUri {
+    pub fn is_empty(&self) -> bool {
+        self.empty
+    }
+}
+
+impl PartialEq<&str> for DidUri {
+    fn eq(&self, rhs: &&str) -> bool {
+        let s = self.to_string();
+        s == *rhs
+    }
+}
+
+impl PartialEq<str> for DidUri {
+    fn eq(&self, rhs: &str) -> bool {
+        let s = self.to_string();
+        s == rhs
+    }
+}
+
+impl PartialEq for DidUri {
+    fn eq(&self, rhs: &DidUri) -> bool {
+        let ls = self.to_string();
+        let rs = rhs.to_string();
+        ls == rs
+    }
+}
+
+impl Default for DidUri {
+    fn default() -> Self {
+        DidUri {
+            empty: true,
+            id: String::default(),
+            method: String::default(),
+            params: None,
+            query: None,
+            fragment: None
+        }
+    }
 }
 
 impl FromStr for DidUri {
@@ -34,6 +84,7 @@ impl FromStr for DidUri {
 impl Clone for DidUri {
     fn clone(&self) -> Self {
         DidUri {
+            empty: self.empty,
             id: self.id.clone(),
             method: self.method.clone(),
             params: self.params.clone(),
@@ -45,6 +96,10 @@ impl Clone for DidUri {
 
 impl std::fmt::Display for DidUri {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        if self.empty {
+            return write!(f, "");
+        }
+
         let mut params = String::new();
         if let Some(p) = &self.params {
             params.push(';');
@@ -79,6 +134,17 @@ impl std::fmt::Display for DidUri {
 }
 
 fn parse_did_string(i: &[u8]) -> IResult<&[u8], DidUri> {
+    if i.len() == 0 {
+        return Ok((i, DidUri {
+            empty: true,
+            id: String::default(),
+            method: String::default(),
+            params: None,
+            query: None,
+            fragment: None
+        }));
+    }
+
     let (i, _) = tag("did:")(i)?;
     let (i, method) = map(take_while(is_did_method_char), std::str::from_utf8)(i)?;
     let (i, _) = char(':')(i)?;
@@ -90,6 +156,7 @@ fn parse_did_string(i: &[u8]) -> IResult<&[u8], DidUri> {
     Ok((
         i,
         DidUri {
+            empty: false,
             id: id.unwrap().to_string(),
             method: method.unwrap().to_string(),
             params: params.map(|m| {
@@ -150,6 +217,45 @@ fn query_token(i: &[u8]) -> IResult<&[u8], &str> {
 
 fn did_fragment(i: &[u8]) -> IResult<&[u8], &str> {
     preceded(char('#'), map_res(is_not(":#[]"), std::str::from_utf8))(i)
+}
+
+impl<'de> Deserialize<'de> for DidUri {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct DidUriVisitor;
+
+        impl<'de> Visitor<'de> for DidUriVisitor {
+            type Value = DidUri;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("DID string")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<DidUri, E>
+            where
+                E: de::Error,
+            {
+                match DidUri::from_str(value) {
+                    Ok(d) => Ok(d),
+                    Err(e) => Err(de::Error::custom(e.to_string()))
+                }
+            }
+        }
+
+        deserializer.deserialize_any(DidUriVisitor)
+    }
+}
+
+impl Serialize for DidUri {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let s = self.to_string();
+        serializer.serialize_str(s.as_str())
+    }
 }
 
 #[cfg(test)]
