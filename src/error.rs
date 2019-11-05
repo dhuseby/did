@@ -3,9 +3,9 @@ use failure::{Backtrace, Context, Fail};
 #[derive(Clone, Eq, PartialEq, Debug, Fail)]
 pub enum DidErrorKind {
     #[fail(display = "Invalid did uri specified. Must start with 'did:'")]
-    InvalidDidUri,
+    InvalidUri,
     #[fail(display = "Unknown did method: {:?}", msg)]
-    UnknownDidMethod { msg: String },
+    UnknownMethod { msg: String },
 }
 
 #[derive(Debug)]

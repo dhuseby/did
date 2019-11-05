@@ -20,7 +20,7 @@ use serde::de::{self, Deserialize, Deserializer, Visitor};
 use serde::ser::{Serialize, Serializer};
 
 #[derive(Debug)]
-pub struct DidUri {
+pub struct Uri {
     empty: bool,
     pub id: String,
     pub method: String,
@@ -29,37 +29,41 @@ pub struct DidUri {
     pub fragment: Option<String>,
 }
 
-impl DidUri {
+impl Uri {
+    pub fn new() -> Self {
+        Uri::default()
+    }
+
     pub fn is_empty(&self) -> bool {
         self.empty
     }
 }
 
-impl PartialEq<&str> for DidUri {
+impl PartialEq<&str> for Uri {
     fn eq(&self, rhs: &&str) -> bool {
         let s = self.to_string();
         s == *rhs
     }
 }
 
-impl PartialEq<str> for DidUri {
+impl PartialEq<str> for Uri {
     fn eq(&self, rhs: &str) -> bool {
         let s = self.to_string();
         s == rhs
     }
 }
 
-impl PartialEq for DidUri {
-    fn eq(&self, rhs: &DidUri) -> bool {
+impl PartialEq for Uri {
+    fn eq(&self, rhs: &Uri) -> bool {
         let ls = self.to_string();
         let rs = rhs.to_string();
         ls == rs
     }
 }
 
-impl Default for DidUri {
+impl Default for Uri {
     fn default() -> Self {
-        DidUri {
+        Uri {
             empty: true,
             id: String::default(),
             method: String::default(),
@@ -70,20 +74,20 @@ impl Default for DidUri {
     }
 }
 
-impl FromStr for DidUri {
+impl FromStr for Uri {
     type Err = DidError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match parse_did_string(s.as_bytes()) {
             Ok((_, d)) => Ok(d),
-            Err(_) => Err(DidError::from_kind(DidErrorKind::InvalidDidUri)),
+            Err(_) => Err(DidError::from_kind(DidErrorKind::InvalidUri)),
         }
     }
 }
 
-impl Clone for DidUri {
+impl Clone for Uri {
     fn clone(&self) -> Self {
-        DidUri {
+        Uri {
             empty: self.empty,
             id: self.id.clone(),
             method: self.method.clone(),
@@ -94,7 +98,7 @@ impl Clone for DidUri {
     }
 }
 
-impl std::fmt::Display for DidUri {
+impl std::fmt::Display for Uri {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         if self.empty {
             return write!(f, "");
@@ -133,9 +137,9 @@ impl std::fmt::Display for DidUri {
     }
 }
 
-fn parse_did_string(i: &[u8]) -> IResult<&[u8], DidUri> {
+fn parse_did_string(i: &[u8]) -> IResult<&[u8], Uri> {
     if i.len() == 0 {
-        return Ok((i, DidUri {
+        return Ok((i, Uri {
             empty: true,
             id: String::default(),
             method: String::default(),
@@ -155,7 +159,7 @@ fn parse_did_string(i: &[u8]) -> IResult<&[u8], DidUri> {
 
     Ok((
         i,
-        DidUri {
+        Uri {
             empty: false,
             id: id.unwrap().to_string(),
             method: method.unwrap().to_string(),
@@ -219,36 +223,36 @@ fn did_fragment(i: &[u8]) -> IResult<&[u8], &str> {
     preceded(char('#'), map_res(is_not(":#[]"), std::str::from_utf8))(i)
 }
 
-impl<'de> Deserialize<'de> for DidUri {
+impl<'de> Deserialize<'de> for Uri {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        struct DidUriVisitor;
+        struct UriVisitor;
 
-        impl<'de> Visitor<'de> for DidUriVisitor {
-            type Value = DidUri;
+        impl<'de> Visitor<'de> for UriVisitor {
+            type Value = Uri;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str("DID string")
             }
 
-            fn visit_str<E>(self, value: &str) -> Result<DidUri, E>
+            fn visit_str<E>(self, value: &str) -> Result<Uri, E>
             where
                 E: de::Error,
             {
-                match DidUri::from_str(value) {
+                match Uri::from_str(value) {
                     Ok(d) => Ok(d),
                     Err(e) => Err(de::Error::custom(e.to_string()))
                 }
             }
         }
 
-        deserializer.deserialize_any(DidUriVisitor)
+        deserializer.deserialize_any(UriVisitor)
     }
 }
 
-impl Serialize for DidUri {
+impl Serialize for Uri {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -261,57 +265,6 @@ impl Serialize for DidUri {
 #[cfg(test)]
 mod resolve_method_tests {
     use super::*;
-
-    use crate::error::DidErrorKind;
-
-    #[test]
-    fn test_did_method_from_str_valid() {
-        let did = DidUri::from_str("did:git:akjsdhgaksdjhgasdkgh");
-        assert!(did.is_ok());
-        let did = did.unwrap();
-        assert_eq!(did.id, "akjsdhgaksdjhgasdkgh".to_string());
-        assert_eq!(did.method, "git".to_string());
-        assert!(did.fragment.is_none());
-        assert!(did.params.is_none());
-        assert!(did.query.is_none());
-
-        let did = DidUri::from_str("did:git:");
-        assert!(did.is_ok());
-        let did = did.unwrap();
-        assert_eq!(did.id, "".to_string());
-
-        let did = DidUri::from_str("did:sov:123456ygbvgfred;pool=mainnet;key=gdsadsfgdsfah");
-        assert!(did.is_ok());
-        let did = did.unwrap();
-        assert!(did.params.is_some());
-        let params = did.params.unwrap();
-        assert_eq!(params.len(), 2);
-        assert_eq!(params.get("pool"), Some(&"mainnet".to_string()));
-        assert_eq!(params.get("key"), Some(&"gdsadsfgdsfah".to_string()));
-
-        assert!(DidUri::from_str("did:sov:builder:aksjdhgaksjdhgaskdgjh").is_ok());
-        assert!(DidUri::from_str("did:sov:test:aksjdhgaksjdhgaskdgjh").is_ok());
-        let did = DidUri::from_str(
-            "did:git:12345678jhasdg;file=Users_janedoe_.git?key=ham&value=meat#1-2-3",
-        );
-
-        assert!(did.is_ok());
-        let did = did.unwrap();
-        assert!(did.params.is_some());
-        assert!(did.query.is_some());
-        assert!(did.fragment.is_some());
-        let params = &did.params.clone().unwrap();
-        let query = &did.query.clone().unwrap();
-
-        assert_eq!(params.get("file"), Some(&"Users_janedoe_.git".to_string()));
-        assert_eq!(query.get("key"), Some(&"ham".to_string()));
-        assert_eq!(query.get("value"), Some(&"meat".to_string()));
-        assert_eq!(&did.fragment.clone().unwrap(), &"1-2-3".to_string());
-        assert_eq!(
-            did.to_string(),
-            "did:git:12345678jhasdg;file=Users_janedoe_.git?key=ham&value=meat#1-2-3".to_string()
-        );
-    }
 
     #[test]
     fn test_did_params() {
@@ -341,17 +294,6 @@ mod resolve_method_tests {
         let q = b"?%61=%62";
         let d = did_query(q).unwrap().1;
         assert_eq!(d.get("%61"), Some(&"%62"));
-    }
-
-    #[test]
-    fn test_did_method_from_str_invalid() {
-        for s in &["did:", "https://example.org", "did:git", "did:sov"] {
-            let res = DidUri::from_str(s);
-            match res {
-                Ok(_) => assert!(false),
-                Err(e) => assert_eq!(e.kind(), DidErrorKind::InvalidDidUri),
-            };
-        }
     }
 
 }

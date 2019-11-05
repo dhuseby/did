@@ -1,5 +1,5 @@
 pub use self::doc::Document;
-pub use self::uri::DidUri;
+pub use self::uri::Uri;
 
 pub mod doc;
 pub mod error;

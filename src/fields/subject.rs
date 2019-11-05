@@ -3,15 +3,15 @@ use std::cmp::Eq;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use void::Void;
-use crate::uri::DidUri;
+use crate::uri::Uri;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(transparent)]
-pub struct Subject(DidUri);
+pub struct Subject(Uri);
 
 impl Subject {
     pub fn new(s: &str) -> Self {
-        let did = DidUri::from_str(s).unwrap();
+        let did = Uri::from_str(s).unwrap();
         Subject(did)
     }
 
@@ -54,6 +54,6 @@ impl FromStr for Subject {
     type Err = Void;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Subject(DidUri::from_str(s).unwrap()))
+        Ok(Subject(Uri::from_str(s).unwrap()))
     }
 }
