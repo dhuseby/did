@@ -1,4 +1,4 @@
-use crate::error::{DidError, DidErrorKind};
+use crate::{DidError, DidErrorKind};
 
 use std::{
     collections::BTreeMap,

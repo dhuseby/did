@@ -1,7 +1,7 @@
 extern crate did_doc as did;
 
 use did::{
-    error::DidErrorKind,
+    DidErrorKind,
     Uri,
 };
 use std::str::FromStr;

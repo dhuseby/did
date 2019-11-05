@@ -5,22 +5,24 @@
 This is a Rust crate for working with DID documents as defined in the
 [Decentralized Identifier Spec](https://w3c-ccg.github.io/did-spec/).
 
-This crate currently supports two functions: parsing and verifying DID URIs and DID Documents.
-It does not handle DID method specs which are more specific to a network or context.
+This crate currently supports two functions: parsing and verifying DID URIs and
+DID Documents.  It does not handle DID method specs which are more specific to
+a network or context.
 
-For handling DID URIs use the `DidUri` class found in `did::uri::DidUri::from_str`.
+The namespace is `did_uri` with top level re-exports of `Uri`, `Document`,
+`DidError`, `DidErrorKind`.
 
-Example
+Example of parsing a DID Uri:
 ```rust
-use did::uri::DidUri;
+use did_doc::Uri;
 
 
 fn main() {
     //Valid DID URI
-    let did = DidUri::from_str("did:git:akjsdhgaksdjhgasdkgh").unwrap();
+    let did = Uri::from_str("did:git:akjsdhgaksdjhgasdkgh").unwrap();
     
     //Invalid DID URI
-    let res = DidUri::from_str("did:git:");
+    let res = Uri::from_str("did:git:");
     assert!(res.is_err());
 
     //Convert back to string
@@ -28,11 +30,9 @@ fn main() {
 }
 ```
 
-For handling DID Document parsing use `did::Document`.
-
-Example
+Example of parsing a DID Document:
 ```rust
-use did::{
+use did_doc::{
     fields::{PublicKeyEncoding, PublicKeyType},
     Document
 };
