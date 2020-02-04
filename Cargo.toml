@@ -1,6 +1,6 @@
 [package]
 name = "did_doc"
-version = "0.3.1"
+version = "0.4.0"
 authors = ["David Huseby", "Mike Lodder"]
 edition = "2018"
 description = "Library for loading/saving DID documents."
@@ -14,16 +14,15 @@ license = "Apache-2.0"
 [lib]
 name = "did_doc"
 path = "src/lib.rs"
-crate-type = ["staticlib", "rlib", "cdylib"]
+crate-type = ["rlib"]
 
 [dependencies]
+failure = "0.1.5"
 indexmap = { version = "1.2.0", features = ["serde-1"] }
 log = "0.4.6"
-serde = "1.0"
-serde_derive = "1.0"
+nom = "5.1"
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 strum = "0.15.0"
 strum_macros = "0.15.0"
 void = "1.0.2"
-failure = "0.1.5"
-nom = "5.0.0"

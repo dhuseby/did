@@ -3,7 +3,6 @@ use crate::{DidError, DidErrorKind};
 use std::{
     collections::BTreeMap,
     default::Default,
-    fmt,
     str::FromStr
 };
 
@@ -16,14 +15,15 @@ use nom::{
     IResult,
 };
 
-use serde::de::{self, Deserialize, Deserializer, Visitor};
-use serde::ser::{Serialize, Serializer};
+use serde::{Serialize, Deserialize};
+use serde::{de::{Deserializer, Visitor, Error}, ser::Serializer};
 
 #[derive(Debug)]
 pub struct Uri {
     empty: bool,
     pub id: String,
     pub method: String,
+    pub path: Option<Vec<String>>,
     pub params: Option<BTreeMap<String, String>>,
     pub query: Option<BTreeMap<String, String>>,
     pub fragment: Option<String>,
@@ -67,6 +67,7 @@ impl Default for Uri {
             empty: true,
             id: String::default(),
             method: String::default(),
+            path: None,
             params: None,
             query: None,
             fragment: None
@@ -91,6 +92,7 @@ impl Clone for Uri {
             empty: self.empty,
             id: self.id.clone(),
             method: self.method.clone(),
+            path: self.path.clone(),
             params: self.params.clone(),
             query: self.query.clone(),
             fragment: self.fragment.clone(),
@@ -104,9 +106,17 @@ impl std::fmt::Display for Uri {
             return write!(f, "");
         }
 
+        let mut path = String::new();
+        if let Some(p) = &self.path {
+            path.push('/');
+            path.push_str(&p.join("/"));
+        }
+
         let mut params = String::new();
         if let Some(p) = &self.params {
-            params.push(';');
+            if params.len() == 0 {
+                params.push(';');
+            }
             params.push_str(
                 &p.iter()
                     .map(|(k, v)| format!("{}={}", k, v))
@@ -131,9 +141,48 @@ impl std::fmt::Display for Uri {
 
         write!(
             f,
-            "did:{}:{}{}{}{}",
-            self.method, self.id, params, query, fragment
+            "did:{}:{}{}{}{}{}",
+            self.method, self.id, path, params, query, fragment
         )
+    }
+}
+
+impl<'de> Deserialize<'de> for Uri {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct UriVisitor;
+
+        impl<'de> Visitor<'de> for UriVisitor {
+            type Value = Uri;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("DID string")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Uri, E>
+            where
+                E: Error,
+            {
+                match Uri::from_str(value) {
+                    Ok(d) => Ok(d),
+                    Err(e) => Err(Error::custom(e.to_string()))
+                }
+            }
+        }
+
+        deserializer.deserialize_any(UriVisitor)
+    }
+}
+
+impl Serialize for Uri {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let s = self.to_string();
+        serializer.serialize_str(s.as_str())
     }
 }
 
@@ -143,6 +192,7 @@ fn parse_did_string(i: &[u8]) -> IResult<&[u8], Uri> {
             empty: true,
             id: String::default(),
             method: String::default(),
+            path: None,
             params: None,
             query: None,
             fragment: None
@@ -153,6 +203,7 @@ fn parse_did_string(i: &[u8]) -> IResult<&[u8], Uri> {
     let (i, method) = map(take_while(is_did_method_char), std::str::from_utf8)(i)?;
     let (i, _) = char(':')(i)?;
     let (i, id) = map(take_while(is_did_id_char), std::str::from_utf8)(i)?;
+    let (i, path) = opt(did_path)(i)?;
     let (i, params) = opt(did_params)(i)?;
     let (i, query) = opt(did_query)(i)?;
     let (i, fragment) = opt(did_fragment)(i)?;
@@ -163,6 +214,7 @@ fn parse_did_string(i: &[u8]) -> IResult<&[u8], Uri> {
             empty: false,
             id: id.unwrap().to_string(),
             method: method.unwrap().to_string(),
+            path: path.map(|s| { s.into_iter().map(|g| g.to_string()).collect() }),
             params: params.map(|m| {
                 m.into_iter()
                     .map(|(k, v)| (k.to_string(), v.to_string()))
@@ -184,6 +236,11 @@ fn is_did_method_char(c: u8) -> bool {
 fn is_did_id_char(c: u8) -> bool {
     let c = c as char;
     c.is_ascii_alphanumeric() || c == '.' || c == '_' || c == '-'
+}
+
+fn did_path(i: &[u8]) -> IResult<&[u8], Vec<&str>> {
+    let (i, segments) = preceded(char('/'), separated_list(char('/'), map_res(is_a("abcedfghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-%:@!$&'().*+,"), std::str::from_utf8)))(i)?;
+    Ok((i, segments.into_iter().collect()))
 }
 
 fn did_params(i: &[u8]) -> IResult<&[u8], BTreeMap<&str, &str>> {
@@ -223,45 +280,6 @@ fn did_fragment(i: &[u8]) -> IResult<&[u8], &str> {
     preceded(char('#'), map_res(is_not(":#[]"), std::str::from_utf8))(i)
 }
 
-impl<'de> Deserialize<'de> for Uri {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct UriVisitor;
-
-        impl<'de> Visitor<'de> for UriVisitor {
-            type Value = Uri;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("DID string")
-            }
-
-            fn visit_str<E>(self, value: &str) -> Result<Uri, E>
-            where
-                E: de::Error,
-            {
-                match Uri::from_str(value) {
-                    Ok(d) => Ok(d),
-                    Err(e) => Err(de::Error::custom(e.to_string()))
-                }
-            }
-        }
-
-        deserializer.deserialize_any(UriVisitor)
-    }
-}
-
-impl Serialize for Uri {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let s = self.to_string();
-        serializer.serialize_str(s.as_str())
-    }
-}
-
 #[cfg(test)]
 mod resolve_method_tests {
     use super::*;
@@ -296,4 +314,10 @@ mod resolve_method_tests {
         assert_eq!(d.get("%61"), Some(&"%62"));
     }
 
+    #[test]
+    fn test_did_path() {
+        let path = b"/spec/trust_ping/1.0/ping";
+        let p = did_path(path).unwrap().1;
+        assert_eq!(p, vec!["spec", "trust_ping", "1.0", "ping"].iter().map(|s| s.to_string()).collect::<Vec<String>>());
+    }
 }
