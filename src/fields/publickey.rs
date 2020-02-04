@@ -1,7 +1,7 @@
 use crate::fields::Subject;
-use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
-use serde::ser::{Serialize, SerializeStruct, Serializer};
-use serde_derive::{Deserialize, Serialize};
+use serde::de::{self, Deserializer, MapAccess, Visitor};
+use serde::ser::{SerializeStruct, Serializer};
+use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::fmt;
 use std::str::FromStr;

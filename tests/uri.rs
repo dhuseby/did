@@ -101,3 +101,13 @@ fn did_uri_2() {
     }
 }
 
+#[test]
+fn did_uri_3() {
+    let s = "did:sov:wjb4bjwb1235kbg1235/spec/tree/d7879f5e/text";
+    let did = s.parse::<Uri>();
+    assert!(did.is_ok());
+    let did = did.unwrap();
+    assert_eq!(did.id, "wjb4bjwb1235kbg1235");
+    assert!(did.path.is_some());
+    assert_eq!(did.path, Some(vec!["spec".to_string(), "tree".to_string(), "d7879f5e".to_string(), "text".to_string()]));
+}

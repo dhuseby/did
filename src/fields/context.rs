@@ -1,5 +1,5 @@
-use serde::ser::{Serialize, SerializeSeq, Serializer};
-use serde_derive::Deserialize;
+use serde::ser::{SerializeSeq, Serializer};
+use serde::{Serialize, Deserialize};
 use std::default::Default;
 use std::str::FromStr;
 use void::Void;

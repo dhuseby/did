@@ -1,6 +1,6 @@
 use crate::fields::{string_or_list, Context, PublicKey, ServiceEndpoint, Subject};
 use indexmap::IndexMap;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::{self, Value};
 use std::str::FromStr;
 use std::string::{String, ToString};

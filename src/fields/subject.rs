@@ -1,4 +1,4 @@
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::cmp::Eq;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
@@ -31,6 +31,18 @@ impl PartialEq<&str> for Subject {
 impl PartialEq<str> for Subject {
     fn eq(&self, rhs: &str) -> bool {
         self.0 == rhs
+    }
+}
+
+impl PartialEq<Uri> for Subject {
+    fn eq(&self, rhs: &Uri) -> bool {
+        self.0 == *rhs
+    }
+}
+
+impl PartialEq<Uri> for &Subject {
+    fn eq(&self, rhs: &Uri) -> bool {
+        self.0 == *rhs
     }
 }
 
